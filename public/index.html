@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaflet Map - World View</title>
+  <title>Mappa Mundi</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
@@ -16,13 +16,17 @@
     <div class="flex items-center justify-center p-4 w-1/3 bg-white shadow-lg">
       <div>
         <h1 class="text-4xl font-bold text-gray-700">Geo Caching</h1><br/>
-        <p class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online) <br/> For all the lovers of Riddles, Map searching and much more</p>
+        <p class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online) <br/> For all the lovers of Riddles, Map searching and much more
         <br/><br/>
-        <p class="mt-2 text-lg text-gray-600"><b>How to play:</b> Riddles and Questions will appear on this side and you need to click on the right place on the map</p>
+        <b>How to play:</b> Riddles and Questions will appear on this side and you need to click on the right place on the map
         <br/><br/>
-        <p class="mt-2 text-lg text-gray-600"><b>Victory prize:</b> Well ... Knowledge ... </p>
+        <b>Victory prize:</b> Well ... Knowledge ...
         <br/><br/>
-        <p class="mt-2 text-lg text-gray-600"><b>Start:</b> Lets start strong select in the map the coolest country (I am portuguese) </p>
+        <b>Start:</b> Easy one - Select My hometown Porto,Portugal </p>
+        <br/><br/>
+        <!-- Button to check the coordinates -->
+        <button id="checkButton" class="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-700">Check Coordinates</button>
+        <p id="result" class="mt-2 text-lg text-gray-600"></p>
       </div>
     </div>
   </div>
@@ -32,7 +36,6 @@
     // Initialize the map, centered in Europe with a zoom level to show the whole world
     const map = L.map('map').setView([20, 0], 3); // Latitude/Longitude for Europe; zoom level 2 for global view
     // Add OpenStreetMap tiles
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -41,7 +44,6 @@
     // Variable to store the current marker
     let currentMarker = null;
 
-    // Add OpenStreetMap tiles
     // Add event listener to map to allow users to add a marker on click
     map.on('click', function(e) {
       const lat = e.latlng.lat;
@@ -54,6 +56,27 @@
 
       // Create a new marker at the clicked location
       currentMarker = L.marker([lat, lng]).addTo(map);
+    });
+
+    // Predefined coordinates to check against (for example, Portugal's coordinates)
+    const targetCoordinates = { lat: 41.1579, lng: -8.6291 }; // Coordinates of Porto,Portugal
+
+    // Add event listener to the button to check the coordinates when clicked
+    document.getElementById('checkButton').addEventListener('click', function() {
+      if (currentMarker) {
+        const clickedLat = currentMarker.getLatLng().lat;
+        const clickedLng = currentMarker.getLatLng().lng;
+
+        // Check if the clicked coordinates are close enough to the target coordinates (within a small threshold)
+        const threshold = 0.5; // 0.5 degrees tolerance
+        if (Math.abs(clickedLat - targetCoordinates.lat) < threshold && Math.abs(clickedLng - targetCoordinates.lng) < threshold) {
+          document.getElementById('result').textContent = "Success! You clicked near the correct location!";
+        } else {
+          document.getElementById('result').textContent = "Try again! You're not quite there yet.";
+        }
+      } else {
+        document.getElementById('result').textContent = "Please click on the map first!";
+      }
     });
   </script>
 </body>
