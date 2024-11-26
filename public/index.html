@@ -16,13 +16,13 @@
     <div class="flex items-center justify-center p-4 w-1/3 bg-white shadow-lg">
       <div>
         <h1 class="text-4xl font-bold text-gray-700">Geo Caching</h1><br/>
-        <p class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online) <br/> For all the lovers of Riddles, Map searching and much more
+        <p id="question" class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online) <br/> For all the lovers of Riddles, Map searching and much more
         <br/><br/>
         <b>How to play:</b> Riddles and Questions will appear on this side and you need to click on the right place on the map
         <br/><br/>
         <b>Victory prize:</b> Well ... Knowledge ...
         <br/><br/>
-        <b>Start:</b> Easy one - Select My hometown Porto,Portugal </p>
+        <b>Start:</b> Easy one - Select my hometown Porto, Portugal </p>
         <br/><br/>
         <!-- Button to check the coordinates -->
         <button id="checkButton" class="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-700">Check Coordinates</button>
@@ -41,10 +41,20 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Variable to store the current marker
-    let currentMarker = null;
+    // Predefined list of coordinates to check against (e.g., coordinates of different cities)
+    const coordinatesList = [
+      { lat: 41.1579, lng: -8.6291, name: "Porto, Portugal" },
+      { lat: 48.8566, lng: 2.3522, name: "Paris, France" },
+      { lat: 40.7128, lng: -74.0060, name: "New York, USA" },
+      { lat: 34.0522, lng: -118.2437, name: "Los Angeles, USA" }
+    ];
+
+    // Variable to keep track of the current target coordinates and its index
+    let currentTargetIndex = 0;
+    let currentTarget = coordinatesList[currentTargetIndex];
 
     // Add event listener to map to allow users to add a marker on click
+    let currentMarker = null;
     map.on('click', function(e) {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
@@ -58,8 +68,13 @@
       currentMarker = L.marker([lat, lng]).addTo(map);
     });
 
-    // Predefined coordinates to check against (for example, Portugal's coordinates)
-    const targetCoordinates = { lat: 41.1579, lng: -8.6291 }; // Coordinates of Porto,Portugal
+    // Update the instructions based on the current target
+    function updateInstructions() {
+      document.getElementById('question').textContent = `Find the location of ${currentTarget.name}`;
+    }
+
+    // Update instructions when page loads
+    //updateInstructions();
 
     // Add event listener to the button to check the coordinates when clicked
     document.getElementById('checkButton').addEventListener('click', function() {
@@ -69,8 +84,17 @@
 
         // Check if the clicked coordinates are close enough to the target coordinates (within a small threshold)
         const threshold = 0.5; // 0.5 degrees tolerance
-        if (Math.abs(clickedLat - targetCoordinates.lat) < threshold && Math.abs(clickedLng - targetCoordinates.lng) < threshold) {
-          document.getElementById('result').textContent = "Success! You clicked near the correct location!";
+        if (Math.abs(clickedLat - currentTarget.lat) < threshold && Math.abs(clickedLng - currentTarget.lng) < threshold) {
+          document.getElementById('question').textContent = `Success! You clicked near ${currentTarget.name}.`;
+
+          // Move to the next target in the list
+          currentTargetIndex++;
+          if (currentTargetIndex < coordinatesList.length) {
+            currentTarget = coordinatesList[currentTargetIndex];
+            updateInstructions();
+          } else {
+            document.getElementById('result').textContent = "Congratulations! You've completed all targets!";
+          }
         } else {
           document.getElementById('result').textContent = "Try again! You're not quite there yet.";
         }
