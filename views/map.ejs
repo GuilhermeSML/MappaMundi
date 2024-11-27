@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mappa Mundi</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body class="h-screen bg-gray-100">
+  <div class="flex h-full">
+    <!-- Map Section -->
+    <div id="map" class="flex-1 h-full"></div>
+
+    <!-- Text Section -->
+    <div class="flex items-center justify-center p-4 w-1/3 bg-white shadow-lg">
+      <div>
+        <h1 class="text-4xl font-bold text-gray-700">Geo Caching</h1><br />
+        <p id="question" class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online)
+          <br /><br />
+          <b>How to play:</b> Pictures will appear on this side and you need to click on the right place on
+          the map
+          <br /><br />
+          <b>Start:</b> Select the place on the map
+        </p>
+        <br /><br />
+        <!-- Image section to show location images -->
+        <div id="locationImageSection" class="mt-4">
+          <img id="locationImage"
+            src="https://raw.githubusercontent.com/GuilhermeSML/MappaMundi/81e8cbb7b06bded2d8b5703de74482b1451c7434/public/img/porto.jpg"
+            alt="Location Image" class="w-full h-auto object-cover" />
+        </div>
+        <!-- Button to check the coordinates -->
+        <button id="checkButton" class="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-700">Check</button>
+        <button id="nextButton" class="mt-4 p-2 bg-green-500 text-white rounded-md hover:bg-blue-700">Next</button>
+
+        <p id="result" class="mt-2 text-lg text-gray-600"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    document.getElementById('nextButton').style.display = 'none';
+    // Initialize the map, centered in Europe with a zoom level to show the whole world
+    const map = L.map('map').setView([20, 0], 3); // Latitude/Longitude for Europe; zoom level 2 for global view
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Predefined list of coordinates with names and images
+    const coordinatesList = JSON.parse('<%- JSON.stringify(coordinatesList) %>') ;
+
+    // Variable to keep track of the current target coordinates and its index
+    let currentTargetIndex = 0;
+    let currentTarget = coordinatesList[currentTargetIndex];
+
+    // Add event listener to map to allow users to add a marker on click
+    let currentMarker = null;
+    let currentRadius = null;
+    let lineSuccess = null;
+    let targetMarker = null;
+
+    map.on('click', function (e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+
+      // If there's already a marker, remove it
+      if (currentMarker) {
+        map.removeLayer(currentMarker);
+        map.removeLayer(currentRadius);
+      }
+
+      // Create a new marker at the clicked location
+      currentMarker = L.marker([lat, lng]).addTo(map);
+      currentRadius = L.circle([lat, lng], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.3,
+        radius: 10000, // 10 km radius
+      }).addTo(map);
+    });
+
+
+    // Update the instructions based on the current target
+    function updateInstructions() {
+      document.getElementById('question').textContent = "";
+      document.getElementById('locationImage').src = currentTarget.image; // Update the image based on the current target
+    }
+
+    // Add event listener to the button to check the coordinates when clicked
+    document.getElementById('checkButton').addEventListener('click', function () {
+      if (currentMarker) {
+        const clickedLat = currentMarker.getLatLng().lat;
+        const clickedLng = currentMarker.getLatLng().lng;
+
+        // Check if the clicked coordinates are close enough to the target coordinates (within a small threshold)
+        const distance = haversine(clickedLat, clickedLng, currentTarget.lat, currentTarget.lng); // 10km distance max
+        if (distance <= 10) {
+          document.getElementById('result').textContent = `Success! You clicked ${Math.round(distance)}km from ${currentTarget.name}.`;
+          createSuccessLine([clickedLat, clickedLng], [currentTarget.lat, currentTarget.lng]);
+          document.getElementById('checkButton').style.display = 'none';
+          document.getElementById('nextButton').style.display = 'block';
+        } else {
+          document.getElementById('result').textContent = "Try again! You're not quite there yet.";
+        }
+      } else {
+        document.getElementById('result').textContent = "Please click on the map first!";
+      }
+    });
+
+    // Add event listener to the button to check the coordinates when clicked
+    document.getElementById('nextButton').addEventListener('click', function () {
+      document.getElementById('checkButton').style.display = 'block';
+      document.getElementById('nextButton').style.display = 'none';
+      clean()
+
+      // Move to the next target in the list
+      currentTargetIndex++;
+      if (currentTargetIndex < coordinatesList.length) {
+        currentTarget = coordinatesList[currentTargetIndex];
+        updateInstructions();
+      } else {
+        document.getElementById('result').textContent = "Congratulations! You've completed all targets!";
+      }
+    });
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Earth's radius in km
+      const toRadians = (angle) => (angle * Math.PI) / 180;
+
+      const dLat = toRadians(lat2 - lat1);
+      const dLon = toRadians(lon2 - lon1);
+
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // Distance in km
+    }
+
+    function createSuccessLine(cCoord, tCoord) {
+      latlngs = [new L.LatLng(cCoord[0],cCoord[1]),new L.LatLng(tCoord[0],tCoord[1])]
+      targetMarker = L.marker(tCoord).addTo(map);
+      map.removeLayer(currentRadius);
+      lineSuccess = L.polyline(latlngs, {
+        color: 'blue',           // Line color
+        weight: 4,               // Line width
+        opacity: 0.5,            // Line opacity
+      }).addTo(map);
+    }
+
+    function clean(){
+      map.removeLayer(currentMarker);
+      map.removeLayer(currentRadius);
+      map.removeLayer(targetMarker);
+      map.removeLayer(lineSuccess);
+      document.getElementById('result').textContent = "";
+    }
+
+  </script>
+
+  <a href="https://buymeacoffee.com/guilhermeloureiro" target="_blank"
+    class="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full text-sm fixed bottom-4 right-4 hover:bg-yellow-600 transition">
+    Buy Me a Coffee
+  </a>
+</body>
+
+</html>

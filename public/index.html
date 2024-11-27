@@ -2,124 +2,25 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mappa Mundi</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Map App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="h-screen bg-gray-100">
-  <div class="flex h-full">
-    <!-- Map Section -->
-    <div id="map" class="flex-1 h-full"></div>
-
-    <!-- Text Section -->
-    <div class="flex items-center justify-center p-4 w-1/3 bg-white shadow-lg">
-      <div>
-        <h1 class="text-4xl font-bold text-gray-700">Geo Caching</h1><br />
-        <p id="question" class="mt-2 text-lg text-gray-600">Welcome to the world of Geo Caching (purely online) <br />
-          For all the lovers of Riddles, Map searching and much more
-          <br /><br />
-          <b>How to play:</b> Riddles and Questions will appear on this side and you need to click on the right place on
-          the map
-          <br /><br />
-          <b>Victory prize:</b> Well ... Knowledge ...
-          <br /><br />
-          <b>Start:</b> Easy one - Select my hometown Porto, Portugal
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-md rounded-lg p-8 max-w-sm w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Welcome to the Map App</h1>
+        <p class="text-gray-600 text-center mb-6">
+            Navigate to the map and explore your journey.
         </p>
-        <br /><br />
-        <!-- Button to check the coordinates -->
-        <button id="checkButton" class="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-700">Check
-          Coordinates</button>
-        <p id="result" class="mt-2 text-lg text-gray-600"></p>
-
-        <!-- Image section to show location images -->
-        <div id="locationImageSection" class="mt-4">
-          <img id="locationImage" src="img/porto.jpg" alt="Location Image" class="w-full h-auto object-cover" />
-        </div>
-      </div>
+        <form action="/api/map" method="POST" class="space-y-4">
+            <button type="submit"
+                class="w-full bg-blue-500 text-white py-2 rounded-md text-lg font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                Go to Map
+            </button>
+        </form>
     </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Initialize the map, centered in Europe with a zoom level to show the whole world
-    const map = L.map('map').setView([20, 0], 3); // Latitude/Longitude for Europe; zoom level 2 for global view
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // Predefined list of coordinates with names and images
-    const coordinatesList = [
-      { lat: 41.1579, lng: -8.6291, name: "Porto, Portugal", image: "img/porto.jpg" },
-      { lat: 48.8566, lng: 2.3522, name: "Paris, France", image: "https://example.com/paris.jpg" },
-      { lat: 40.7128, lng: -74.0060, name: "New York, USA", image: "https://example.com/newyork.jpg" },
-      { lat: 34.0522, lng: -118.2437, name: "Los Angeles, USA", image: "https://example.com/losangeles.jpg" }
-    ];
-
-    // Variable to keep track of the current target coordinates and its index
-    let currentTargetIndex = 0;
-    let currentTarget = coordinatesList[currentTargetIndex];
-
-    // Add event listener to map to allow users to add a marker on click
-    let currentMarker = null;
-    map.on('click', function (e) {
-      const lat = e.latlng.lat;
-      const lng = e.latlng.lng;
-
-      // If there's already a marker, remove it
-      if (currentMarker) {
-        map.removeLayer(currentMarker);
-      }
-
-      // Create a new marker at the clicked location
-      currentMarker = L.marker([lat, lng]).addTo(map);
-    });
-
-    // Update the instructions based on the current target
-    function updateInstructions() {
-      document.getElementById('question').textContent = `Find the location of ${currentTarget.name}`;
-      document.getElementById('locationImage').src = currentTarget.image; // Update the image based on the current target
-    }
-
-    // Update instructions when page loads
-    //updateInstructions();
-
-    // Add event listener to the button to check the coordinates when clicked
-    document.getElementById('checkButton').addEventListener('click', function () {
-      if (currentMarker) {
-        const clickedLat = currentMarker.getLatLng().lat;
-        const clickedLng = currentMarker.getLatLng().lng;
-
-        // Check if the clicked coordinates are close enough to the target coordinates (within a small threshold)
-        const threshold = 0.5; // 0.5 degrees tolerance
-        if (Math.abs(clickedLat - currentTarget.lat) < threshold && Math.abs(clickedLng - currentTarget.lng) < threshold) {
-          document.getElementById('question').textContent = `Success! You clicked near ${currentTarget.name}.`;
-
-          // Move to the next target in the list
-          currentTargetIndex++;
-          if (currentTargetIndex < coordinatesList.length) {
-            currentTarget = coordinatesList[currentTargetIndex];
-            updateInstructions();
-          } else {
-            document.getElementById('result').textContent = "Congratulations! You've completed all targets!";
-          }
-        } else {
-          document.getElementById('result').textContent = "Try again! You're not quite there yet.";
-        }
-      } else {
-        document.getElementById('result').textContent = "Please click on the map first!";
-      }
-    });
-  </script>
-
-  <a href="https://buymeacoffee.com/guilhermeloureiro" target="_blank"
-    class="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full text-sm fixed bottom-4 right-4 hover:bg-yellow-600 transition">
-    Buy Me a Coffee
-  </a>
 </body>
 
 </html>
